@@ -28,18 +28,18 @@ int main(void){
 	UART2_Init();
 	timer_capture();
 	USART_Write(USART2, (uint8_t *)start, strlen(start));
-	while (1)							
+	while (1)							//Infinite loop
 		{
 			if(mutex_lock==START)     //Wait to press 'n' to start a new bucket of measurement.
 			{
 				while(!(USART_Read(USART2)=='n'));
-				mutex_lock=POST;
+				mutex_lock=POST;					//Go to Post function block
 				Red_LED_On();
 			}
-			else if(mutex_lock==POST)
+			else if(mutex_lock==POST)		//Post function block
 			{
 
-				if(POST_function()==1)
+				if(POST_function()==1) //Post function success
 					{
 					getlimits(&low_bound,&up_bound);	//Print the lower bound and upper bound
 					if (mutex_lock==POST_FAIL)		//Post function check for buckets in range failed.
@@ -56,10 +56,10 @@ int main(void){
 						}
 					}
 			}
-			else if(mutex_lock==POST_SUCCESS)
+			else if(mutex_lock==POST_SUCCESS)		//Histogram calculation block
 			{
 				Green_LED_On();
-					if(flag==0)
+					if(flag==0)						//Capture 1000 samples
 						{
 							if((TIM2->SR & TIM_SR_CC1IF)==TIM_SR_CC1IF)
 								{
@@ -72,7 +72,7 @@ int main(void){
 								}
 						}
 
-				else if(flag==HISTOGRAM)
+				else if(flag==HISTOGRAM)			//Calculate the histogram of samples.
 							{
 							for(int i = 0; i < 1002; i++)
 								{
@@ -90,7 +90,7 @@ int main(void){
 
 		  prev = dt[1];
 
-		  for (int i = 2; i < 1002; i++)
+		  for (int i = 2; i < 1002; i++) //Print samples
 				{
 					if (dt[i] == prev)
 					{
@@ -114,8 +114,8 @@ int main(void){
 						mutex_lock=START;
 
 		}
-	Green_LED_Off();
-		}
+		Green_LED_Off();
+			}
 
-		}
+			}
 }
