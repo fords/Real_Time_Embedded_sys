@@ -26,7 +26,32 @@ void timer_capture()
 /** Post Function entry **/
 int POST_function(void)
 {
+	uint32_t t1=0, t2=0,delta=0;
+	uint16_t test=0;
 
+		while (test!=2)		//Compute delta for 1000 samples
+		{
+			if((TIM2->SR & TIM_SR_CC1IF)==TIM_SR_CC1IF)
+				{
+						t2= TIM2->CCR1;
+						delta= t2-t1;
+						t1=t2;
+						test++;
+				}
+		}
+		if(delta<100000)	//Samples in Range
+			{
+				USART_Write(USART2, (uint8_t *)result_pass, strlen(result_pass));
+				flag=0;
+				mutex_lock= 1;
+				test=0;
+			}
+			else						//Samples out of Range
+			{
+				mutex_lock= 2;
+				//test=0;
+				flag=0;
+			}
 		return 1;
 }
 
