@@ -81,6 +81,45 @@ int main(void){
 
 		if ( input3 == 0xd) 									//Check if Enter is presssed
 			{
-        sprintf("enter");
+        
 			}
   }
+
+/**user defined program to set different recipie commands for the motors to execute**/
+
+void testsnipp()
+{
+
+	servoA.cmdparam= &buf_servoA[0];
+	servoB.cmdparam= &buf_servoB[0];
+
+
+
+//Skip A-PA0- Position 3
+	  *servoA.cmdparam= MOV+0;
+    *(servoA.cmdparam++) =  MOV+1;
+    *(servoA.cmdparam++) =  MOV+2;
+		*(servoA.cmdparam++) =  SKIP;
+    *(servoA.cmdparam++) =  MOV+3;
+    *(servoA.cmdparam++) =  MOV+4;
+    *(servoA.cmdparam++) =  MOV+5;
+		*(servoA.cmdparam++) =  MOV+6;
+    *(servoA.cmdparam++) =  RECIPE_END;
+
+//Skip B-PA1- Position 3
+	  *servoB.cmdparam= MOV+0;
+    *(servoB.cmdparam++) =  MOV+1;
+    *(servoB.cmdparam++) =  MOV+2;
+		*(servoB.cmdparam++) =  SKIP;
+    *(servoB.cmdparam++) =  MOV+3;
+    *(servoB.cmdparam++) =  MOV+4;
+    *(servoB.cmdparam++) =  MOV+5;
+		*(servoB.cmdparam++) =  MOV+6;
+    *(servoB.cmdparam++) =  RECIPE_END;
+
+
+
+  servoA.cmdparam= &buf_servoA[0];
+	servoB.cmdparam= &buf_servoB[0];
+
+}
