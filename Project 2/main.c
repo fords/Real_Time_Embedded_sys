@@ -81,7 +81,6 @@ int main(void){
 
 		if ( input3 == 0xd) 									//Check if Enter is presssed
 			{
-        
 			}
   }
 
@@ -93,6 +92,10 @@ void testsnipp()
 	servoA.cmdparam= &buf_servoA[0];
 	servoB.cmdparam= &buf_servoB[0];
 
+
+
+
+/*
 
 
 //Skip A-PA0- Position 3
@@ -117,6 +120,35 @@ void testsnipp()
 		*(servoB.cmdparam++) =  MOV+6;
     *(servoB.cmdparam++) =  RECIPE_END;
 
+*/
+
+
+//Loop test A-PA0-   all positions
+
+	   *servoA.cmdparam= MOV+0;
+    *(servoA.cmdparam++) =  LOOP_START+4;
+    *(servoA.cmdparam++) =  MOV+1;
+    *(servoA.cmdparam++) =  MOV+2;
+    *(servoA.cmdparam++) =  MOV+3;
+    *(servoA.cmdparam++) =  MOV+4;
+    *(servoA.cmdparam++) =  MOV+5;
+		*(servoA.cmdparam++) =  MOV+6;
+    *(servoA.cmdparam++) =  LOOP_END;
+    *(servoA.cmdparam++) =  RECIPE_END;
+
+//Loop test B-PA1-   all positions
+	   *servoB.cmdparam= MOV+0;
+    *(servoB.cmdparam++) =  LOOP_START+4;
+    *(servoB.cmdparam++) =  MOV+1;
+    *(servoB.cmdparam++) =  MOV+2;
+    *(servoB.cmdparam++) =  MOV+3;
+    *(servoB.cmdparam++) =  MOV+4;
+    *(servoB.cmdparam++) =  MOV+5;
+		*(servoB.cmdparam++) =  MOV+6;
+    *(servoB.cmdparam++) =  LOOP_END;
+    *(servoB.cmdparam++) =  RECIPE_END;
+
+*/
 
 
   servoA.cmdparam= &buf_servoA[0];
