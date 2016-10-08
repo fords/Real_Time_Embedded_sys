@@ -122,7 +122,7 @@ void testsnipp()
 
 */
 
-
+/*
 //Loop test A-PA0-   all positions
 
 	   *servoA.cmdparam= MOV+0;
@@ -149,6 +149,72 @@ void testsnipp()
     *(servoB.cmdparam++) =  RECIPE_END;
 
 */
+/*
+//ROR test A-PA0-  2 positions
+    *servoA.cmdparam= MOV+0;
+		*(servoA.cmdparam++) =  LOOP_START+4;
+    *(servoA.cmdparam++) =  MOV+1;
+    *(servoA.cmdparam++) =  MOV+3;
+		*(servoA.cmdparam++) =  BREAK;
+		*(servoA.cmdparam++) =  LOOP_END;
+    *(servoA.cmdparam++) =  RECIPE_END;
+
+//ROR test B-PA1-  2 positions
+    *servoB.cmdparam= MOV+0;
+		*(servoB.cmdparam++) =  LOOP_START+4;
+    *(servoB.cmdparam++) =  MOV+1;
+    *(servoB.cmdparam++) =  MOV+3;
+		*(servoB.cmdparam++) =  BREAK;
+		*(servoB.cmdparam++) =  LOOP_END;
+    *(servoB.cmdparam++) =  RECIPE_END;
+*/
+
+
+//Test Snippt A-PA0
+*(servoA.cmdparam) = MOV+0; //There must NOT be intervening instructions in this group to allow
+*(servoA.cmdparam++) = MOV+5 ; //verification of default time delay.
+*(servoA.cmdparam++) = MOV+1;
+*(servoA.cmdparam++) = MOV+3;
+*(servoA.cmdparam++) = LOOP_START+2 ;//Test the default loop behavior.
+*(servoA.cmdparam++) = MOV+1;
+*(servoA.cmdparam++) = MOV+4;
+*(servoA.cmdparam++) = LOOP_END;
+*(servoA.cmdparam++) = MOV+0;
+*(servoA.cmdparam++) = MOV+2;
+*(servoA.cmdparam++) = WAIT_TIME+0;
+*(servoA.cmdparam++) = MOV+3 ; //Move to an adjacent position to verify
+*(servoA.cmdparam++) = WAIT_TIME+0;
+*(servoA.cmdparam++) = MOV+2;
+*(servoA.cmdparam++) = MOV+3 ; //Measure the timing precision of the 9.3 second delay with an external
+*(servoA.cmdparam++) = WAIT_TIME+3; //timer.
+*(servoA.cmdparam++) = WAIT_TIME+3;
+*(servoA.cmdparam++) = WAIT_TIME+3;
+*(servoA.cmdparam++) = MOV+4;
+
+
+
+
+// //Test Snippt B-PA1
+
+*(servoB.cmdparam) = MOV+0; //There must NOT be intervening instructions in this group to allow
+*(servoB.cmdparam++) = MOV+5 ; //verification of default time delay.
+*(servoB.cmdparam++) = MOV+1;
+*(servoB.cmdparam++) = MOV+3;
+*(servoB.cmdparam++) = LOOP_START+2 ;//Test the default loop behavior.
+*(servoB.cmdparam++) = MOV+1;
+*(servoB.cmdparam++) = MOV+4;
+*(servoB.cmdparam++) = LOOP_END;
+*(servoB.cmdparam++) = MOV+0;
+*(servoB.cmdparam++) = MOV+2;
+*(servoB.cmdparam++) = WAIT_TIME+0;
+*(servoB.cmdparam++) = MOV+3 ; //Move to an adjacent position to verify
+*(servoB.cmdparam++) = WAIT_TIME+0;
+*(servoB.cmdparam++) = MOV+2;
+*(servoB.cmdparam++) = MOV+3 ; //Measure the timing precision of the 9.3 second delay with an external
+*(servoB.cmdparam++) = WAIT_TIME+3; //timer.
+*(servoB.cmdparam++) = WAIT_TIME+3;
+*(servoB.cmdparam++) = WAIT_TIME+3;
+*(servoB.cmdparam++) = MOV+4;
 
 
   servoA.cmdparam= &buf_servoA[0];
