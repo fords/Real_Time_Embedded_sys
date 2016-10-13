@@ -94,6 +94,26 @@ void testsnipp()
 
 
 
+//6 Positions A-PA0
+	  *servoA.cmdparam= MOV+0;
+    *(servoA.cmdparam++) =  MOV+1;
+    *(servoA.cmdparam++) =  MOV+2;
+    *(servoA.cmdparam++) =  MOV+3;
+    *(servoA.cmdparam++) =  MOV+4;
+    *(servoA.cmdparam++) =  MOV+5;
+		*(servoA.cmdparam++) =  MOV+6;
+    *(servoA.cmdparam++) =  RECIPE_END;
+
+//6 Positions B-PA1
+	  *servoB.cmdparam= MOV+0;
+    *(servoB.cmdparam++) =  MOV+1;
+    *(servoB.cmdparam++) =  MOV+2;
+    *(servoB.cmdparam++) =  MOV+3;
+    *(servoB.cmdparam++) =  MOV+4;
+    *(servoB.cmdparam++) =  MOV+5;
+		*(servoB.cmdparam++) =  MOV+6;
+    *(servoB.cmdparam++) =  RECIPE_END;
+
 
 /*
 
@@ -169,7 +189,7 @@ void testsnipp()
     *(servoB.cmdparam++) =  RECIPE_END;
 */
 
-
+/*
 //Test Snippt A-PA0
 *(servoA.cmdparam) = MOV+0; //There must NOT be intervening instructions in this group to allow
 *(servoA.cmdparam++) = MOV+5 ; //verification of default time delay.
@@ -191,9 +211,9 @@ void testsnipp()
 *(servoA.cmdparam++) = WAIT_TIME+3;
 *(servoA.cmdparam++) = MOV+4;
 
+*/
 
-
-
+/*
 // //Test Snippt B-PA1
 
 *(servoB.cmdparam) = MOV+0; //There must NOT be intervening instructions in this group to allow
@@ -215,7 +235,7 @@ void testsnipp()
 *(servoB.cmdparam++) = WAIT_TIME+3;
 *(servoB.cmdparam++) = WAIT_TIME+3;
 *(servoB.cmdparam++) = MOV+4;
-
+*/
 
   servoA.cmdparam= &buf_servoA[0];
 	servoB.cmdparam= &buf_servoB[0];
