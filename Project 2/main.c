@@ -1,7 +1,8 @@
 /**************************************************************************************************************************************
 
 main function
- Servo motor and recipie command
+ Version 8.1 -
+  Servo motor and recipie command
 
 **************************************************************************************************************************************/
 
@@ -81,8 +82,181 @@ int main(void){
 
 		if ( input3 == 0xd) 									//Check if Enter is presssed
 			{
+			/***Servo1 control program***/
+			if(input1 != 0x58 && input1!= 0x78) //Check ASCII Hex value of X and x to terminate
+				{
+				/**Switch case for servo A. p=pause, b=break, c=contnue, r=rotate right, l=rotate left, n=nop**/
+				switch ( input1)
+						{
+						case 'c':
+						case 'C':
+							flagsyncA=0;
+							statusA= run;
+							Green_LED_On();
+							Red_LED_Off();
+							break;
+						case 'p':
+						case 'P':
+							flagsyncA=1;
+							statusA= pause;
+							Green_LED_Off();
+							Red_LED_On();
+							break;
+						case 'l':
+						case 'L':
+							if(flagsyncA==1)
+							TIM2->CCR1=TIM2->CCR1-4;
+							break;
+						case 'r':
+						case 'R':
+							if(flagsyncA==1)
+							TIM2->CCR1=TIM2->CCR1+4;
+							break;
+						case 'n':
+						case 'N':
+							break;
+						case 'b':
+						case 'B':
+							flagsyncA=0;
+								servoA.cmdparam = &buf_servoA[0];
+								statusA=run;
+								Green_LED_On();
+								Red_LED_Off();
+							break;
+						}
+				}
+			else
+				{
+				USART_Write(USART2, (uint8_t *)command4, strlen(command4));
+				}
+
 			}
-  }
+		else
+			USART_Write(USART2, (uint8_t *)command6, strlen(command6));	  
+	}
+
+
+/*user defined function to realise the recipie command*/
+void runsnipp(void)
+{
+	static uint8_t opcodeA,paramA,opcodeB,paramB,loopcntA,loopcntB,flagA,flagB,*looptrA,*looptrB,runFA=0,runFB=0,waitA,waitB,paramA_L,paramB_L;
+
+	// opcodeX:Bit5-7 in the Mnemonics, paramX: Bit0-4 in the Mnemonics, loopcntX: No of count times looping,
+	// flagX: to sync between start and end loop, runX: Flag for no of Wait states, WaitX: is the wait counter
+
+	if(statusA!=pause)
+		{
+     opcodeA=decodeOpcode(*(servoA.cmdparam));
+     paramA=decodeRange(*(servoA.cmdparam));
+			switch(opcodeA)
+			{
+				case 0:
+					TIM2->CCR1 =0;
+					break;
+
+        case 1:
+					if(paramA<=6)
+						TIM2->CCR1 = paramA*4;
+					else
+					{
+						statusA= error;
+						Green_LED_On();
+						Red_LED_On();
+					}
+					break;
+
+        case 2:
+						if(paramA<=32 && paramA>0)
+						{
+						if(runFA==0)
+						{
+							waitA=paramA;
+							runFA=1;
+						}
+						else
+						{
+						waitA-=1;
+						if(waitA==0)
+						runFA=0;
+						}
+					}
+				else
+					{
+						statusA= error;
+						Green_LED_On();
+						Red_LED_On();
+					}
+				break;
+
+				case 3:
+					servoA.cmdparam++;
+         break;
+
+				case 4:
+					if(paramA<=31)
+            {
+            if(flagA==0)
+            {
+							loopcntA=paramA;
+							looptrA=servoA.cmdparam;
+							flagA=1;
+						}
+						}
+					else
+					{
+						statusA= error;
+						Green_LED_On();
+						Red_LED_On();
+					}
+					break;
+
+
+			case 5:
+				if(flagA==1)
+					{
+					if(loopcntA!=0)
+						{
+						loopcntA-=1;
+						servoA.cmdparam=looptrA;
+						}
+					else
+						flagA=0;
+				}
+				break;
+            case 7:
+						loopcntA=0;
+				break;
+            }
+
+		if(opcodeA!=RECIPE_END)
+      {
+				if(runFA==0)
+				servoA.cmdparam++;
+			}
+			else
+			{
+				//do nothing
+			}
+        paramA_L=paramA;
+
+	}
+		else
+		{
+			//do nothing
+		}
+
+
+		}
+     paramB_L=paramB;
+
+			}
+else
+		{
+			//do nothing
+		}
+
+}
+
 
 /**user defined program to set different recipie commands for the motors to execute**/
 
@@ -143,7 +317,7 @@ void testsnipp()
 */
 
 /*
-//Loop test A-PA0-   all positions
+//Loop test A-PA0-  4times all positions
 
 	   *servoA.cmdparam= MOV+0;
     *(servoA.cmdparam++) =  LOOP_START+4;
@@ -156,7 +330,7 @@ void testsnipp()
     *(servoA.cmdparam++) =  LOOP_END;
     *(servoA.cmdparam++) =  RECIPE_END;
 
-//Loop test B-PA1-   all positions
+//Loop test B-PA1-  4times all positions
 	   *servoB.cmdparam= MOV+0;
     *(servoB.cmdparam++) =  LOOP_START+4;
     *(servoB.cmdparam++) =  MOV+1;
