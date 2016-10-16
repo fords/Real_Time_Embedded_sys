@@ -88,37 +88,37 @@ int main(void){
 				/**Switch case for servo A. p=pause, b=break, c=contnue, r=rotate right, l=rotate left, n=nop**/
 				switch ( input1)
 						{
-						case 'c':
+						case 'c':					//CASE continue
 						case 'C':
 							flagsyncA=0;
-							statusA= run;
+							statusA= run;				//Continue State Green Led ON
 							Green_LED_On();
 							Red_LED_Off();
 							break;
-						case 'p':
+						case 'p':					//CASE pause so update status and halt the servo A
 						case 'P':
 							flagsyncA=1;
 							statusA= pause;
 							Green_LED_Off();
-							Red_LED_On();
+							Red_LED_On();				//Pause State Red Led ON
 							break;
-						case 'l':
+						case 'l':					//CASE Rotate Left
 						case 'L':
 							if(flagsyncA==1)
 							TIM2->CCR1=TIM2->CCR1-4;
 							break;
-						case 'r':
+						case 'r':					//CASE Rotate Right
 						case 'R':
 							if(flagsyncA==1)
 							TIM2->CCR1=TIM2->CCR1+4;
 							break;
-						case 'n':
+						case 'n':					//CASE No-Operation
 						case 'N':
 							break;
-						case 'b':
+						case 'b':					//CASE Break
 						case 'B':
 							flagsyncA=0;
-								servoA.cmdparam = &buf_servoA[0];
+								servoA.cmdparam = &buf_servoA[0]; 						//Re-Start the recipe again for servo A
 								statusA=run;
 								Green_LED_On();
 								Red_LED_Off();
@@ -127,12 +127,12 @@ int main(void){
 				}
 			else
 				{
-				USART_Write(USART2, (uint8_t *)command4, strlen(command4));
+				USART_Write(USART2, (uint8_t *)command4, strlen(command4));	 //Invalid command entry for servo A
 				}
 
 			}
 		else
-			USART_Write(USART2, (uint8_t *)command6, strlen(command6));	  
+			USART_Write(USART2, (uint8_t *)command6, strlen(command6));	  //Invalid termination Enter not pressed.
 	}
 
 
@@ -146,26 +146,26 @@ void runsnipp(void)
 
 	if(statusA!=pause)
 		{
-     opcodeA=decodeOpcode(*(servoA.cmdparam));
-     paramA=decodeRange(*(servoA.cmdparam));
+     opcodeA=decodeOpcode(*(servoA.cmdparam));		//decode the Mnemonic
+     paramA=decodeRange(*(servoA.cmdparam));			//decode the Range
 			switch(opcodeA)
 			{
-				case 0:
+				case 0:																		//Opcode Instruction=Recipie End
 					TIM2->CCR1 =0;
 					break;
 
-        case 1:
+        case 1:																		//Opcode Instruction=Move
 					if(paramA<=6)
 						TIM2->CCR1 = paramA*4;
 					else
 					{
 						statusA= error;
-						Green_LED_On();
+						Green_LED_On();												//Green and Red LED ON to show illegal operation
 						Red_LED_On();
 					}
 					break;
 
-        case 2:
+        case 2:																		//Opcode Instruction=Wait
 						if(paramA<=32 && paramA>0)
 						{
 						if(runFA==0)
@@ -182,17 +182,17 @@ void runsnipp(void)
 					}
 				else
 					{
-						statusA= error;
+						statusA= error;												//Green and Red LED ON to show illegal operation
 						Green_LED_On();
 						Red_LED_On();
 					}
 				break;
 
-				case 3:
+				case 3:  																	//Opcode Instruction=Skip
 					servoA.cmdparam++;
          break;
 
-				case 4:
+				case 4:																		//Opcode Instruction=Loop Start
 					if(paramA<=31)
             {
             if(flagA==0)
@@ -205,13 +205,13 @@ void runsnipp(void)
 					else
 					{
 						statusA= error;
-						Green_LED_On();
+						Green_LED_On();													//Green and Red LED ON to show illegal operation
 						Red_LED_On();
 					}
 					break;
 
 
-			case 5:
+			case 5:																				//Opcode Instruction=Loop End
 				if(flagA==1)
 					{
 					if(loopcntA!=0)
@@ -223,7 +223,7 @@ void runsnipp(void)
 						flagA=0;
 				}
 				break;
-            case 7:
+            case 7:																	//Opcode Instruction=Break Loop
 						loopcntA=0;
 				break;
             }
@@ -231,7 +231,7 @@ void runsnipp(void)
 		if(opcodeA!=RECIPE_END)
       {
 				if(runFA==0)
-				servoA.cmdparam++;
+				servoA.cmdparam++;						//Next Instruction increment
 			}
 			else
 			{
