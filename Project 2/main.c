@@ -130,6 +130,53 @@ int main(void){
 				USART_Write(USART2, (uint8_t *)command4, strlen(command4));	 //Invalid command entry for servo A
 				}
 
+			/***Servo2 control program***/
+			if(input2 != 0x58 && input2!= 0x78) //Check ASCII Hex value of X and x to terminate
+				{
+				/**Switch case for servo B. p=pause, b=break, c=contnue, r=rotate right, l=rotate left, n=nop**/
+				switch ( input2 )
+					{
+					case 'c':							//CASE continue
+					case 'C':
+						flagsyncB=0;
+						statusB= run;
+						Green_LED_On();			//Continue State Green Led ON
+						Red_LED_Off();
+						break;
+					case 'p':							//CASE pause so update status and halt the servo A
+					case 'P':
+						flagsyncB=1;
+						statusB= pause;
+						Green_LED_Off();
+						Red_LED_On();				//Pause State Red Led ON
+						break;
+					case 'l':
+					case 'L':							//CASE Rotate Left
+						if(flagsyncB==1)
+							TIM2->CCR2=TIM2->CCR2-4;
+						break;
+					case 'r':
+					case 'R':							//CASE Rotate Right
+						if(flagsyncB==1)
+						TIM2->CCR2=TIM2->CCR2+4;
+						break;
+					case 'n':
+					case 'N': 						//CASE No-Operation
+							break;
+					case 'b':
+					case 'B':							//CASE Break
+						flagsyncB=0;
+						servoB.cmdparam = &buf_servoB[0];							//Restart Start the recipe again for servo B
+						statusB= run;
+						Green_LED_On();
+						Red_LED_Off();
+						break;
+					}
+				}
+			else
+				{
+				USART_Write(USART2, (uint8_t *)command5, strlen(command5));	//Invalid command entry for servo B
+				}
 			}
 		else
 			USART_Write(USART2, (uint8_t *)command6, strlen(command6));	  //Invalid termination Enter not pressed.
@@ -245,7 +292,98 @@ void runsnipp(void)
 			//do nothing
 		}
 
+	if(statusB!=pause)
+		{
+      opcodeB=decodeOpcode(*(servoB.cmdparam));//decode the Mnemonic
+      paramB=decodeRange(*(servoB.cmdparam));//decode the Range
+			switch(opcodeB)
+			{
+			case 0://Opcode Instruction=Recipie End
+				TIM2->CCR2 =0;
+				break;
 
+			case 1://Opcode Instruction=Move
+				if(paramB<=6)
+						TIM2->CCR2 = paramB*4;
+				else
+					{
+						statusB= error;
+						Green_LED_On();	//Green and Red LED ON to show illegal operation
+						Red_LED_On();
+					}
+				break;
+
+			case 2://Opcode Instruction=Wait
+				if(paramB<=32 && paramB>0)
+				{
+					if(runFB==0)
+						{
+						waitB=paramB;
+						runFB=1;
+						}
+					else
+						{
+						waitB-=1;
+						if(waitB==0)
+						runFB=0;
+						}
+				}
+				else
+					{
+						statusB= error;
+						Green_LED_On();//Green and Red LED ON to show illegal operation
+						Red_LED_On();
+					}
+				break;
+
+				case 3:  //Opcode Instruction=Skip
+					servoB.cmdparam++;
+        break;
+
+
+				case 4://Opcode Instruction=Loop Start
+				if(paramB<=31)
+            {
+            if(flagB==0)
+            {
+							loopcntB=paramB;
+							looptrB=servoB.cmdparam;
+							flagB=1;
+						}
+						}
+					else
+					{
+						statusB= error;
+						Green_LED_On();	//Green and Red LED ON to show illegal operation
+						Red_LED_On();
+					}
+					break;
+
+
+			case 5://Opcode Instruction=Loop End
+				if(flagB==1)
+					{
+					if(loopcntB!=0)
+						{
+						loopcntB-=1;
+						servoB.cmdparam=looptrB;
+						}
+					else
+						flagB=0;
+				}
+				break;
+            case 7://Opcode Instruction=Break Loop
+					loopcntB=0;
+				break;
+            }
+     if(opcodeB!=RECIPE_END)
+        {
+				if(runFB==0)
+				servoB.cmdparam++;//Next Instruction increment
+				}
+				else
+		{
+			//do nothing
 		}
      paramB_L=paramB;
 
