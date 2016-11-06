@@ -126,6 +126,81 @@ void* Teller1( void* arg )
 	return(0);
 }
 
+/*Teller2 Thread*/
+void* Teller2( void* arg )
+{
+	while(Customer[token_number].token != 0 || (time_value()-time1< 42000) )
+		{
+			if(Customer[token_number].token != 0 )
+			{
+				teller2_waittime= time_value()- time1- teller2_waittime;
+				teller2_handelling= token_number;
+				token_number++;
+				Customer[teller2_handelling].time_in= time_value()-time1;
+				Customer[teller2_handelling].token = 0;
+				Customer[teller2_handelling].teller_number= 2;
+
+			//	printf("Customer: %d \n ",teller2_handelling);
+				usleep(((rand_r(&random_teller2)%12)+1)*50000);
+				Customer[teller2_handelling].time_out= time_value()-time1;
+
+				average_teller2_time += teller2_waittime;
+				if(max_wait_time2< teller2_waittime)
+				{
+					max_wait_time2= teller2_waittime;
+				}
+				teller2_waittime= time_value()-time1;
+
+			}
+			/*Break time for teller2*/
+		if((time_value()- time1 - teller2_time_break) > ( break_time2= (((rand_r(&random_teller2)%30)+30)*100)))
+							{
+								usleep( break_time3*1000);
+					teller2_time_break= time_value()-time1;
+					teller2_waittime= time_value()-time1;
+				}
+		}
+	teller2_done=1;
+	return(0);
+}
+
+/*Teller3 Thread*/
+void* Teller3( void* arg )
+{
+
+	while(Customer[token_number].token != 0 || (time_value()-time1 )< 42000 )
+		{
+			if(Customer[token_number].token != 0 )
+			{
+				teller3_waittime= time_value()- time1- teller3_waittime;
+				teller3_handelling= token_number;
+				token_number++;
+				Customer[teller3_handelling].time_in= time_value()-time1;
+				Customer[teller3_handelling].token = 0;
+				Customer[teller3_handelling].teller_number= 3;
+				sleep_time= (rand()%55)%10+0.5;
+			//	printf("Customer: %d \n ",teller3_handelling);
+				usleep(((rand_r(&random_teller3)%12)+1)*50000);
+				Customer[teller3_handelling].time_out= time_value()-time1;
+				average_teller3_time += teller3_waittime;
+				if(max_wait_time3< teller3_waittime)
+				{
+					max_wait_time3= teller3_waittime;
+				}
+				teller3_waittime= time_value()-time1;
+
+			}
+			/*Break time for teller3*/
+			if((time_value()- time1 - teller3_time_break) > (break_time3= (((rand_r(&random_teller3)%30)+30)*100)))
+				{
+					usleep( break_time3*1000);
+					teller3_time_break= time_value()-time1;
+					teller3_waittime= time_value()-time1;
+				}
+		}
+	teller3_done=1;
+	return(0);
+}
 
 int teller1_number_customer;
 int teller2_number_customer;
@@ -167,7 +242,45 @@ int main( void )
 					average_queue_time +=  queue_time ;
 					average_teller_time += transaction_time;
 				}
+			case 2:
+				{
+					queue_time= Customer[j].time_in - Customer[j].queue_in;
+					transaction_time= Customer[j].time_out - Customer[j].time_in;
+					average_teller2_time+= transaction_time;
+					teller2_number_customer++;
+					if(transaction_time > max_transaction_time2)
+					{
+						 max_transaction_time2= transaction_time;
+					}
+					if(max_queue_time< queue_time)
+					{
+						max_queue_time = queue_time;
+					}
 
+					average_queue_time +=  queue_time ;
+					average_teller_time += transaction_time;
+					break;
+
+				}
+			case 3:
+				{
+					queue_time= Customer[j].time_in - Customer[j].queue_in;
+					transaction_time= Customer[j].time_out - Customer[j].time_in;
+					average_teller3_time+= transaction_time;
+					teller3_number_customer++;
+					if(transaction_time  > max_transaction_time3)
+					{
+						 max_transaction_time3= transaction_time;
+					}
+					if(max_queue_time< queue_time)
+						{
+							max_queue_time = queue_time;
+						}
+
+						average_queue_time +=  queue_time ;
+						average_teller_time += transaction_time;
+					break;
+				}
 			default:
 				break;
 
@@ -176,16 +289,16 @@ int main( void )
 	printf("Total number of customers visited bank is:%d \n", i);
 	printf("Average time customer spends in queue:%f min \n", average_queue_time/(token_number*100.0));
 	printf("Average time customer spends with teller:%f min\n", average_teller_time/(token_number*100.0));
-	printf("Average time teller1 waiting for customer:%f min\n", average_teller_time/(teller1_number_customer*100.0));
-	// printf("Average time teller2 waiting for customer:%f min \n", average_teller2_time/(teller2_number_customer*100.0));
-	// printf("Average time teller3 waiting for customer:%f min \n", average_teller3_time/(teller3_number_customer*100.0));
-	// printf("Max time customer spent in queue:%f min \n",(max_queue_time/100.0) );
+	printf("Average time teller1 waiting for customer:%f min\n", average_teller1_time/(teller1_number_customer*100.0));
+	printf("Average time teller2 waiting for customer:%f min \n", average_teller2_time/(teller2_number_customer*100.0));
+	printf("Average time teller3 waiting for customer:%f min \n", average_teller3_time/(teller3_number_customer*100.0));
+	printf("Max time customer spent in queue:%f min \n",(max_queue_time/100.0) );
 	printf("Max time teller1 waiting for customer:%f min \n",(max_wait_time1/100.0) );
-	// printf("Max time teller2 waiting for customer:%f min \n",max_wait_time2/100.0 );
-	// printf("Max time teller3 waiting for customer:%f min \n",max_wait_time3/100.0 );
-	 printf("Max time teller1 spent in transaction:%f min \n",(max_transaction_time1/100.0) );
-	// printf("Max time teller2 spent in transaction:%f min \n",max_transaction_time2/100.0 );
-	// printf("Max time teller3 spent in transaction:%f min \n",max_transaction_time3/100.0 );
+	printf("Max time teller2 waiting for customer:%f min \n",max_wait_time2/100.0 );
+	printf("Max time teller3 waiting for customer:%f min \n",max_wait_time3/100.0 );
+	printf("Max time teller1 spent in transaction:%f min \n",(max_transaction_time1/100.0) );
+	printf("Max time teller2 spent in transaction:%f min \n",max_transaction_time2/100.0 );
+	printf("Max time teller3 spent in transaction:%f min \n",max_transaction_time3/100.0 );
 	printf("max number of people in queue :%u \n",max_queue );
 
 	return(0);
