@@ -26,14 +26,15 @@
 #define OUTPUT_ADDRESS 0x288
 #define INPUT_ADDRESS 0x289
 #define CTRL_ADDRESS 0x28B
+pthread_mutex_t count_mutex;
 
-
-unsigned int time_prev,time_aft,privity_err ;
+unsigned int time_prev,time_aft,delta,privity_err;
 uintptr_t ctrl_handle;
 uintptr_t data_handleA,data_handleB;
 //uintptr_t status_handle;
-
-char echo_byte,mutex_lock=0;
+struct timespec time_info1,time_info2;
+static int clock_time;
+char echo_byte,flag=0;
 unsigned int time_value(void)
 {
 	struct timeval tv1;
@@ -41,9 +42,71 @@ unsigned int time_value(void)
 	return (tv1.tv_sec * 1000 + tv1.tv_usec / 1000);
 }
 
+void clockTick()
+{
+    clock_time++;							//clock is ticking in the timer
+}
+void startTimer(){
+    static timer_t timer;
+    static struct sigevent   event;
+    static struct sigaction  action;
+    static struct itimerspec time_info;
+    time_info.it_value.tv_nsec    = 100000;
+    time_info.it_interval.tv_nsec = 1666667;
+	action.sa_sigaction = &clockTick;
+    action.sa_flags = SA_SIGINFO;
+    sigaction(SIGUSR1, &action, NULL);
+    SIGEV_SIGNAL_INIT(&event, SIGUSR1);
+    timer_create(CLOCK_REALTIME, &event, &timer);
+    timer_settime(timer, 0, &time_info, 0);
+
+}
+
+void *pulse(void *arg)
+{
+	time_info1.tv_nsec = 10000;
+    time_info1.tv_sec = 0;
+    time_info2.tv_nsec = 60000000;
+    time_info2.tv_sec = 0;
+	while(1)
+	{
+	//pthread_mutex_lock(&count_mutex);
+	out8(data_handleA, HIGH);
+	nanospin( &time_info1 );
+	//pthread_mutex_unlock(&count_mutex);
+	//printf("High \n");
+	//usleep(2);
+
+	out8(data_handleA, LOW);
+	nanospin( &time_info2 );
+	//printf("Low \n");
+	//usleep(36000);
+
+	}
+}
+
+void *measure(void *arg)
+{
+while(1){
+	if ((in8(data_handleB) & 0x01) && flag == 0)
+		{
+			time_prev=time_value();
+		    flag = 1;
+		}
+	while((in8(data_handleB) & 0x01) && flag ==1);
+	flag=0;
+	if(flag==0)
+	{
+		time_aft=time_value();
+		delta=time_aft-time_prev;
+		delta=delta*17150;
+		printf("\nDistance measured is: %d",delta);
+	}
+}
+}
+
 int main( void )
 {
-
 	printf("Welcome to the Momentics IDE\n");
 	/* Give this thread root permission to access the hardware */
 
@@ -76,37 +139,14 @@ int main( void )
 		return EXIT_FAILURE;
 	}
 
-		while(1)
-		{
-			echo_byte = in8(ctrl_handle);
-			echo_byte= echo_byte|0x02;
-			echo_byte= echo_byte&0xEF;
-			out8( ctrl_handle, echo_byte );
+	echo_byte = in8(ctrl_handle);
+	echo_byte= echo_byte|0x02;
+	echo_byte= echo_byte&0xEF;
+	out8( ctrl_handle, echo_byte );
 
-			if(mutex_lock==0)
-			{
-				out8(data_handleA, HIGH);
-				mutex_lock=1;
-				usleep(1000*1000);
-				printf("High \n");
-			}
-
-			else
-			{
-				out8(data_handleA, LOW);
-				mutex_lock=0;
-				usleep(1000*1000);
-				printf("Low \n");
-			}
-
-			/*echo_byte = in8(echo_handle);
-			if(echo_byte & 0x01)
-			time_prev=time_value;
-			while(in8(echo_handle)&0x01);
-			time_aft=time_value;
-			printf("Time is :%u     ",time_aft- time_prev);
-			usleep(1000*1000);*/
-		}
+	 pthread_create( NULL, NULL, &pulse, NULL );
+	// pthread_create( NULL, NULL, &measure, NULL );
+	 while(1);
 
 	return(0);
 }
