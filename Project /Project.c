@@ -26,14 +26,18 @@
 #define OUTPUT_ADDRESS 0x288
 #define INPUT_ADDRESS 0x289
 #define CTRL_ADDRESS 0x28B
-pthread_mutex_t count_mutex;
 
-unsigned int time_prev,time_aft,delta,privity_err;
+uint8_t recived;
+float distance;
+clock_t time_start;
+clock_t time_end;
+unsigned int time_value_micro(void);
+unsigned int time_prev,time_aft,privity_err ;
 uintptr_t ctrl_handle;
 uintptr_t data_handleA,data_handleB;
-struct timespec time_info1,time_info2;
-static int clock_time;
-char echo_byte,flag1=0,flag2=0;
+//uintptr_t status_handle;
+int i;
+char echo_byte,mutex_lock=0;
 unsigned int time_value(void)
 {
 	struct timeval tv1;
@@ -41,97 +45,85 @@ unsigned int time_value(void)
 	return (tv1.tv_sec * 1000 + tv1.tv_usec / 1000);
 }
 
-void *pulse(void *arg)
+unsigned int time_value_micro(void)
 {
-	time_info1.tv_nsec = 10000;
-    time_info1.tv_sec = 0;
-    time_info2.tv_nsec = 60000000;
-    time_info2.tv_sec = 0;
+	struct timeval tv1;
+	gettimeofday (&tv1, NULL);
+	return (tv1.tv_usec);
+}
+
+void *value(void* arg )
+{
 	while(1)
-	{
-	pthread_mutex_lock(&count_mutex);
-	out8(data_handleA, HIGH);
-	usleep(2);
-	pthread_mutex_unlock(&count_mutex);
-	out8(data_handleA, LOW);
-	usleep(36000);
+			{
 
-	}
+				out8(data_handleA, 0x01);
+				usleep(20);
+				out8(data_handleA, 0x00);
+
+				//printf("time= %u\n", time_start);
+				//time_start = clock();
+				while(recived == 0x00)
+				{
+					recived = in8(data_handleB)& 0x01;
+				}
+
+				if(recived == 0x01)
+				{
+					time_start= clock();
+					while( recived == 0x01 )
+					{
+						recived = in8(data_handleB)&0x01;
+					}
+					time_end = clock();
+					if(time_end- time_start> 18000 )
+					{
+						printf("Distance is more than the range \n");
+					}
+					else if(time_end- time_start<300 )
+					{
+						printf("Distance is less than the range \n");
+					}
+					else
+					{
+						distance = (time_end- time_start)/149.4;
+						printf("Distance is %f inches\n", distance);
+					}
+
+				}
+				else
+				{
+					puts("OUT of range");
+				}
+
+			usleep(1000000);
+			}
 }
 
-void *measure(void *arg)
-{
-while(1){
-	if(flag1==0)
-	{
-	if(in8(data_handleB) & 0x01)
-		{
-			time_prev=time_value();
-		    flag1 = 1;
-		}
-	}
-	else if(flag1==1)
-	{
-		while(in8(data_handleB) & 0x01)
-		{
-			 //do nothing
-		}
-				delta=time_value()-time_prev;
-				//delta=delta*17150;
-				printf("\nDistance measured is: %d",delta);
-				flag1=0;
-	}
-}
-}
 
 int main( void )
 {
+
 	printf("Welcome to the Momentics IDE\n");
 	/* Give this thread root permission to access the hardware */
-
 	privity_err = ThreadCtl( _NTO_TCTL_IO, NULL );
-	if ( privity_err == -1)
-	{
-		fprintf( stderr, "can't get root permissions\n");
-		return -1;
-	}
 
 	/* Get a handle to the parallel port's Control Register */
 	ctrl_handle = mmap_device_io( PORT_LENGTH, CTRL_ADDRESS );
-	if ( ctrl_handle == MAP_DEVICE_FAILED ) {
-		perror( "control map failed" );
-		return EXIT_FAILURE;
-	}
 
 
 	/* Get a handle to the parallel port's Data Register B*/
 	data_handleA = mmap_device_io( PORT_LENGTH, OUTPUT_ADDRESS );
-	if ( data_handleA == MAP_DEVICE_FAILED ) {
-		perror( "data map failed" );
-		return EXIT_FAILURE;
-	}
 
 	/* Get a handle to the parallel port's Data Register B*/
 	data_handleB = mmap_device_io( PORT_LENGTH, INPUT_ADDRESS );
-	if ( data_handleB == MAP_DEVICE_FAILED ) {
-		perror( "data map failed" );
-		return EXIT_FAILURE;
-	}
 
-	echo_byte = in8(ctrl_handle);
-	echo_byte= echo_byte|0x02;
-	echo_byte= echo_byte&0xEF;
-	out8( ctrl_handle, echo_byte );
+				echo_byte = in8(ctrl_handle);
+				echo_byte= echo_byte|0x02;
+				echo_byte= echo_byte&0xEF;
+				out8( ctrl_handle, 0x02);
 
-	 //pthread_create( NULL, NULL, &pulse, NULL );
-	 pthread_create( NULL, NULL, &measure, NULL );
-	 while(1)
-	 {
-			out8(data_handleA, HIGH);
-			usleep(5);
-			out8(data_handleA, LOW);
-			usleep(36*1000);
-	 }
-
+				pthread_create( NULL, NULL, &value, NULL );
+				while(1);
 	return(0);
 }
