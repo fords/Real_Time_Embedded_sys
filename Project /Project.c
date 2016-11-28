@@ -31,35 +31,14 @@ pthread_mutex_t count_mutex;
 unsigned int time_prev,time_aft,delta,privity_err;
 uintptr_t ctrl_handle;
 uintptr_t data_handleA,data_handleB;
-//uintptr_t status_handle;
 struct timespec time_info1,time_info2;
 static int clock_time;
-char echo_byte,flag=0;
+char echo_byte,flag1=0,flag2=0;
 unsigned int time_value(void)
 {
 	struct timeval tv1;
 	gettimeofday (&tv1, NULL);
 	return (tv1.tv_sec * 1000 + tv1.tv_usec / 1000);
-}
-
-void clockTick()
-{
-    clock_time++;							//clock is ticking in the timer
-}
-void startTimer(){
-    static timer_t timer;
-    static struct sigevent   event;
-    static struct sigaction  action;
-    static struct itimerspec time_info;
-    time_info.it_value.tv_nsec    = 100000;
-    time_info.it_interval.tv_nsec = 1666667;
-	action.sa_sigaction = &clockTick;
-    action.sa_flags = SA_SIGINFO;
-    sigaction(SIGUSR1, &action, NULL);
-    SIGEV_SIGNAL_INIT(&event, SIGUSR1);
-    timer_create(CLOCK_REALTIME, &event, &timer);
-    timer_settime(timer, 0, &time_info, 0);
-
 }
 
 void *pulse(void *arg)
@@ -70,17 +49,12 @@ void *pulse(void *arg)
     time_info2.tv_sec = 0;
 	while(1)
 	{
-	//pthread_mutex_lock(&count_mutex);
+	pthread_mutex_lock(&count_mutex);
 	out8(data_handleA, HIGH);
-	nanospin( &time_info1 );
-	//pthread_mutex_unlock(&count_mutex);
-	//printf("High \n");
-	//usleep(2);
-
+	usleep(2);
+	pthread_mutex_unlock(&count_mutex);
 	out8(data_handleA, LOW);
-	nanospin( &time_info2 );
-	//printf("Low \n");
-	//usleep(36000);
+	usleep(36000);
 
 	}
 }
@@ -88,19 +62,24 @@ void *pulse(void *arg)
 void *measure(void *arg)
 {
 while(1){
-	if ((in8(data_handleB) & 0x01) && flag == 0)
+	if(flag1==0)
+	{
+	if(in8(data_handleB) & 0x01)
 		{
 			time_prev=time_value();
-		    flag = 1;
+		    flag1 = 1;
 		}
-	while((in8(data_handleB) & 0x01) && flag ==1);
-	flag=0;
-	if(flag==0)
+	}
+	else if(flag1==1)
 	{
-		time_aft=time_value();
-		delta=time_aft-time_prev;
-		delta=delta*17150;
-		printf("\nDistance measured is: %d",delta);
+		while(in8(data_handleB) & 0x01)
+		{
+			 //do nothing
+		}
+				delta=time_value()-time_prev;
+				//delta=delta*17150;
+				printf("\nDistance measured is: %d",delta);
+				flag1=0;
 	}
 }
 }
@@ -144,9 +123,15 @@ int main( void )
 	echo_byte= echo_byte&0xEF;
 	out8( ctrl_handle, echo_byte );
 
-	 pthread_create( NULL, NULL, &pulse, NULL );
-	// pthread_create( NULL, NULL, &measure, NULL );
-	 while(1);
+	 //pthread_create( NULL, NULL, &pulse, NULL );
+	 pthread_create( NULL, NULL, &measure, NULL );
+	 while(1)
+	 {
+			out8(data_handleA, HIGH);
+			usleep(5);
+			out8(data_handleA, LOW);
+			usleep(36*1000);
+	 }
 
 	return(0);
 }
